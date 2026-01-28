@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
-import { Link, Clipboard, X, Loader2, Download, ListVideo, Facebook, Construction } from 'lucide-react';
+import { Link, Clipboard, X, Loader2, Download, ListVideo, Facebook, Construction, ScanSearch } from 'lucide-react';
 import Navbar from './components/Navbar';
 import ResultCard from './components/ResultCard';
 import InstructionBox from './components/InstructionBox';
 import BatchResultList from './components/BatchResultList';
 import { VideoData } from './types';
-import { fetchVideoData } from './services/tiktokService';
+import { fetchVideoData, fetchChannelVideos } from './services/tiktokService';
 
 const App: React.FC = () => {
   const [activePage, setActivePage] = useState('tiktok');
   const [inputContent, setInputContent] = useState('');
   const [loading, setLoading] = useState(false);
+  const [loadingText, setLoadingText] = useState('');
   
   // Single mode state
   const [singleVideoData, setSingleVideoData] = useState<VideoData | null>(null);
@@ -33,16 +34,39 @@ const App: React.FC = () => {
     setLoading(true);
     setSingleVideoData(null);
     setBatchResults([]);
+    setLoadingText('');
 
     const lines = inputContent.split(/\r?\n/).filter(line => line.trim() !== '');
 
-    // Logic: If only 1 line, treat as single download (show big card).
+    // Logic: If only 1 line, check if it is a channel or video
     // If > 1 line, treat as batch (show list).
     
     if (lines.length === 1) {
+       const line = lines[0].trim();
+       
+       // Detect Channel URL: contains '@' but NO '/video/' or '/photo/'
+       const isChannel = line.includes('tiktok.com/@') && !line.includes('/video/') && !line.includes('/photo/');
+
+       if (isChannel) {
+           setLoadingText('Đang quét toàn bộ video của kênh...');
+           try {
+               const videoUrls = await fetchChannelVideos(line);
+               setInputContent(videoUrls.join('\n'));
+               setLoading(false);
+               setLoadingText('');
+               // We assume the user sees the list and will click "Download Batch" next
+               return;
+           } catch (err: any) {
+               setError(err.message || 'Không thể lấy danh sách video từ kênh này.');
+               setLoading(false);
+               setLoadingText('');
+               return;
+           }
+       }
+
        // Single Video Mode
        try {
-         const data = await fetchVideoData(lines[0].trim());
+         const data = await fetchVideoData(line);
          setSingleVideoData(data);
        } catch (err: any) {
          setError(err.message || 'Không thể tải video này.');
@@ -51,6 +75,7 @@ const App: React.FC = () => {
        }
     } else {
        // Batch Mode
+       setLoadingText('Đang xử lý hàng loạt...');
        try {
          for (let i = 0; i < lines.length; i++) {
             const url = lines[i].trim();
@@ -71,6 +96,7 @@ const App: React.FC = () => {
          setError('Có lỗi xảy ra trong quá trình xử lý hàng loạt.');
        } finally {
          setLoading(false);
+         setLoadingText('');
        }
     }
   };
@@ -92,6 +118,9 @@ const App: React.FC = () => {
   };
 
   const isBatchMode = inputContent.split(/\r?\n/).filter(line => line.trim() !== '').length > 1;
+
+  // Detect if current input is likely a channel for button UI
+  const isSingleChannelInput = !isBatchMode && inputContent.includes('tiktok.com/@') && !inputContent.includes('/video/') && inputContent.trim().length > 0;
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-inter">
@@ -122,7 +151,7 @@ const App: React.FC = () => {
                       value={inputContent}
                       onChange={(e) => setInputContent(e.target.value)}
                       placeholder={
-                        "Dán liên kết TikTok vào đây...\nVí dụ:\nhttps://www.tiktok.com/@user/video/123\nhttps://www.tiktok.com/@user/video/456"
+                        "Dán liên kết TikTok vào đây...\nVí dụ Video: https://www.tiktok.com/@user/video/123\nVí dụ Kênh: https://www.tiktok.com/@user"
                       }
                       className="flex-grow bg-transparent border-none outline-none text-gray-700 placeholder-gray-400 min-h-[60px] max-h-[200px] resize-y py-1"
                       spellCheck={false}
@@ -161,20 +190,22 @@ const App: React.FC = () => {
                     flex items-center gap-3 transition-all duration-300 transform
                     ${loading || !inputContent.trim()
                       ? 'bg-gray-300 cursor-not-allowed' 
-                      : isBatchMode 
-                        ? 'bg-gradient-to-r from-green-500 to-emerald-600 hover:shadow-green-500/30 hover:-translate-y-1 active:scale-95'
-                        : 'bg-gradient-to-r from-blue-500 to-indigo-600 hover:shadow-blue-500/30 hover:-translate-y-1 active:scale-95'
+                      : isSingleChannelInput
+                        ? 'bg-gradient-to-r from-purple-500 to-pink-600 hover:shadow-purple-500/30 hover:-translate-y-1 active:scale-95'
+                        : isBatchMode 
+                            ? 'bg-gradient-to-r from-green-500 to-emerald-600 hover:shadow-green-500/30 hover:-translate-y-1 active:scale-95'
+                            : 'bg-gradient-to-r from-blue-500 to-indigo-600 hover:shadow-blue-500/30 hover:-translate-y-1 active:scale-95'
                     }
                   `}
                 >
                   {loading ? (
                     <>
-                      <Loader2 className="animate-spin" /> {isBatchMode ? 'Đang Xử Lý Hàng Loạt...' : 'Đang Xử Lý...'}
+                      <Loader2 className="animate-spin" /> {loadingText || (isBatchMode ? 'Đang Xử Lý Hàng Loạt...' : 'Đang Xử Lý...')}
                     </>
                   ) : (
                     <>
-                       {isBatchMode ? <ListVideo size={24} /> : <Download size={24} />}
-                       {isBatchMode ? 'Tải Về Hàng Loạt' : 'Tải Ngay'}
+                       {isSingleChannelInput ? <ScanSearch size={24} /> : (isBatchMode ? <ListVideo size={24} /> : <Download size={24} />)}
+                       {isSingleChannelInput ? 'Quét Video Kênh' : (isBatchMode ? 'Tải Về Hàng Loạt' : 'Tải Ngay')}
                     </>
                   )}
                 </button>
