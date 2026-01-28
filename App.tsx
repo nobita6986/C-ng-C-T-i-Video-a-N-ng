@@ -1,15 +1,13 @@
 import React, { useState } from 'react';
 import { Link, Clipboard, X, Loader2, Download, ListVideo } from 'lucide-react';
 import Navbar from './components/Navbar';
-import FeatureSelector from './components/FeatureSelector';
 import ResultCard from './components/ResultCard';
 import InstructionBox from './components/InstructionBox';
 import BatchResultList from './components/BatchResultList';
-import { TabType, VideoData } from './types';
+import { VideoData } from './types';
 import { fetchVideoData } from './services/tiktokService';
 
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<TabType>(TabType.TIKTOK_NO_LOGO);
   const [inputContent, setInputContent] = useState('');
   const [loading, setLoading] = useState(false);
   
@@ -101,11 +99,12 @@ const App: React.FC = () => {
       <main className="flex-grow w-full px-4 sm:px-6 py-12">
         <div className="max-w-5xl mx-auto flex flex-col items-center">
           
-          <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 text-center mb-10">
-            Công Cụ Tải TikTok Đa Năng
+          <h1 className="text-3xl md:text-5xl font-extrabold text-gray-900 text-center mb-4 tracking-tight">
+            Tải Video TikTok Không Logo
           </h1>
-
-          <FeatureSelector activeTab={activeTab} setActiveTab={setActiveTab} />
+          <p className="text-gray-500 text-lg mb-10 text-center max-w-2xl">
+            Công cụ hỗ trợ tải video TikTok, Douyin hàng loạt, tách nhạc MP3 chất lượng cao, miễn phí và không giới hạn.
+          </p>
 
           {/* Show Instructions if typing multiple lines or results exist */}
           {(isBatchMode || batchResults.length > 0) && <InstructionBox />}

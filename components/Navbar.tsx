@@ -1,5 +1,5 @@
 import React from 'react';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Zap } from 'lucide-react';
 
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = React.useState(false);
@@ -16,13 +16,18 @@ const Navbar: React.FC = () => {
     <nav className="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
-          <div className="flex-shrink-0 flex items-center">
-            <a href="#" className="flex items-center gap-1">
-              <span className="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-600">
-                StudyAI
-              </span>
-              <span className="text-2xl font-black text-orange-500">86</span>
-            </a>
+          <div className="flex-shrink-0 flex items-center cursor-pointer" onClick={() => window.location.reload()}>
+            <div className="flex items-center gap-2">
+              <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-2 rounded-lg shadow-lg">
+                <Zap size={24} className="text-white fill-current" />
+              </div>
+              <div className="flex items-center">
+                <span className="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 tracking-tight">
+                  StudyAI
+                </span>
+                <span className="text-2xl font-black text-orange-500 tracking-tight">86</span>
+              </div>
+            </div>
           </div>
           
           {/* Desktop Menu */}
@@ -33,7 +38,7 @@ const Navbar: React.FC = () => {
                 href={link.href}
                 className={`text-sm font-medium transition-colors duration-200 ${
                   link.name === 'Video Tiktok' 
-                    ? 'text-pink-500 font-bold' 
+                    ? 'text-blue-600 font-bold bg-blue-50 px-3 py-1.5 rounded-full' 
                     : 'text-gray-600 hover:text-blue-500'
                 }`}
               >
