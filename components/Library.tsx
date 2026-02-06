@@ -12,11 +12,24 @@ interface LibraryProps {
 const Library: React.FC<LibraryProps> = ({ history, onRemove, onClearAll }) => {
   
   const handleDownload = async (video: VideoData) => {
-    // Re-use the naming logic manually or pass it down, here we simplify for the library
+    // Current timestamp YYYYMMDD_HHMMSS
     const now = new Date();
-    const timestamp = now.toISOString().slice(0, 19).replace(/[-:T]/g, "");
-    const safeTitle = video.title.replace(/[^a-zA-Z0-9 \-_]/g, '').trim().substring(0, 50) || 'video';
-    const filename = `${safeTitle}_${timestamp}.mp4`;
+    const timestamp = 
+        now.getFullYear().toString() +
+        (now.getMonth() + 1).toString().padStart(2, '0') +
+        now.getDate().toString().padStart(2, '0') + '_' +
+        now.getHours().toString().padStart(2, '0') +
+        now.getMinutes().toString().padStart(2, '0') +
+        now.getSeconds().toString().padStart(2, '0');
+
+    // Sanitize title but keep Vietnamese characters
+    const safeTitle = video.title
+        .replace(/[^a-zA-Z0-9 \-_àáãạảăắằẳẵặâấầẩẫậèéẹẻẽêềếểễệđìíĩỉịòóõọỏôốồổỗộơớờởỡợùúũụủưứừửữựỳỵỷỹýÀÁÃẠẢĂẮẰẲẴẶÂẤẦẨẪẬÈÉẸẺẼÊỀẾỂỄỆĐÌÍĨỈỊÒÓÕỌỎÔỐỒỔỖỘƠỚỜỞỠỢÙÚŨỤỦƯỨỪỬỮỰỲỴỶỸÝ]/g, '')
+        .trim()
+        .substring(0, 60);
+
+    const finalTitle = safeTitle || 'video';
+    const filename = `${finalTitle}_${timestamp}.mp4`;
     
     await downloadFile(video.downloads.noWatermark, filename);
   };
