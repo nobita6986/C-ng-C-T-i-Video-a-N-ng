@@ -1,5 +1,5 @@
 import React from 'react';
-import { Menu, X, Zap } from 'lucide-react';
+import { Menu, X, Zap, History } from 'lucide-react';
 
 interface NavbarProps {
   activePage: string;
@@ -13,8 +13,7 @@ const Navbar: React.FC<NavbarProps> = ({ activePage, onSelectPage }) => {
     { id: 'tiktok', name: 'Video Tiktok' },
     { id: 'sora', name: 'Video Sora AI' },
     { id: 'douyin', name: 'Video Douyin' },
-    { id: 'facebook', name: 'Video Facebook' },
-    { id: 'instagram', name: 'Video Instagram' },
+    { id: 'library', name: 'Thư viện', icon: <History size={16} className="inline mr-1" /> },
   ];
 
   return (
@@ -36,17 +35,18 @@ const Navbar: React.FC<NavbarProps> = ({ activePage, onSelectPage }) => {
           </div>
           
           {/* Desktop Menu */}
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden md:flex items-center space-x-2">
             {navLinks.map((link) => (
               <button
                 key={link.id}
                 onClick={() => onSelectPage(link.id)}
-                className={`text-sm font-medium transition-colors duration-200 outline-none ${
+                className={`text-sm font-medium transition-all duration-200 outline-none flex items-center px-4 py-2 rounded-full ${
                   activePage === link.id
-                    ? 'text-blue-600 font-bold bg-blue-50 px-3 py-1.5 rounded-full' 
-                    : 'text-gray-600 hover:text-blue-500'
+                    ? 'text-blue-700 font-bold bg-blue-50' 
+                    : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
                 }`}
               >
+                {link.icon && link.icon}
                 {link.name}
               </button>
             ))}
@@ -66,7 +66,7 @@ const Navbar: React.FC<NavbarProps> = ({ activePage, onSelectPage }) => {
 
       {/* Mobile Menu */}
       {isOpen && (
-        <div className="md:hidden bg-white border-t border-gray-100">
+        <div className="md:hidden bg-white border-t border-gray-100 shadow-lg">
           <div className="pt-2 pb-3 space-y-1 px-4">
             {navLinks.map((link) => (
               <button
@@ -75,12 +75,13 @@ const Navbar: React.FC<NavbarProps> = ({ activePage, onSelectPage }) => {
                   onSelectPage(link.id);
                   setIsOpen(false);
                 }}
-                className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium ${
+                className={`block w-full text-left px-3 py-3 rounded-md text-base font-medium flex items-center ${
                     activePage === link.id
                     ? 'text-blue-600 bg-blue-50'
                     : 'text-gray-700 hover:text-blue-500 hover:bg-gray-50'
                 }`}
               >
+                 {link.icon && <span className="mr-2">{link.icon}</span>}
                 {link.name}
               </button>
             ))}

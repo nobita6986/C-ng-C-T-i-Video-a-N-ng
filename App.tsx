@@ -4,6 +4,7 @@ import Navbar from './components/Navbar';
 import ResultCard from './components/ResultCard';
 import InstructionBox from './components/InstructionBox';
 import BatchResultList from './components/BatchResultList';
+import Library from './components/Library';
 import { VideoData } from './types';
 import { fetchVideoData, fetchChannelVideos } from './services/tiktokService';
 import { fetchSoraVideo } from './services/soraService';
@@ -20,6 +21,40 @@ const App: React.FC = () => {
   // Batch mode state
   const [batchResults, setBatchResults] = useState<VideoData[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  // Library/History State
+  const [history, setHistory] = useState<VideoData[]>(() => {
+    try {
+      const saved = localStorage.getItem('download_history');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
+  // Save history to local storage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('download_history', JSON.stringify(history));
+  }, [history]);
+
+  // Function to add video to history (avoid duplicates by ID)
+  const addToHistory = (video: VideoData) => {
+    setHistory(prev => {
+      // Check if ID exists
+      const exists = prev.some(item => item.id === video.id);
+      if (exists) return prev; // Optionally move to top? for now just ignore
+      // Add to top of list
+      return [video, ...prev];
+    });
+  };
+
+  const removeFromHistory = (id: string) => {
+    setHistory(prev => prev.filter(item => item.id !== id));
+  };
+
+  const clearHistory = () => {
+    setHistory([]);
+  };
 
   // Auto-switch tab based on input
   useEffect(() => {
@@ -54,6 +89,7 @@ const App: React.FC = () => {
         try {
             const data = await fetchSoraVideo(lines[0]);
             setSingleVideoData(data);
+            addToHistory(data); // Add to library
         } catch (err: any) {
             setError(err.message || 'Không thể lấy video Sora.');
         } finally {
@@ -90,6 +126,7 @@ const App: React.FC = () => {
        try {
          const data = await fetchVideoData(line);
          setSingleVideoData(data);
+         addToHistory(data); // Add to library
        } catch (err: any) {
          setError(err.message || 'Không thể tải video này.');
        } finally {
@@ -103,7 +140,11 @@ const App: React.FC = () => {
             const url = lines[i].trim();
             try {
               const data = await fetchVideoData(url);
-              setBatchResults(prev => [...prev, data]);
+              setBatchResults(prev => {
+                  const updated = [...prev, data];
+                  return updated;
+              });
+              addToHistory(data); // Add to library one by one
             } catch (e) {
               console.warn(`Failed to load ${url}`, e);
             }
@@ -154,6 +195,14 @@ const App: React.FC = () => {
                   colorFrom: 'from-orange-500',
                   colorTo: 'to-red-600'
               };
+          case 'library':
+              return {
+                title: 'Thư Viện Của Bạn',
+                desc: 'Quản lý và xem lại các video đã tải xuống gần đây.',
+                placeholder: 'Dán liên kết TikTok/Sora để tải mới...', // Keep placeholder to allow quick switch
+                colorFrom: 'from-gray-600',
+                colorTo: 'to-gray-800'
+              };
           default: // tiktok
               return {
                   title: 'Tải Video TikTok Không Logo',
@@ -172,7 +221,47 @@ const App: React.FC = () => {
       <Navbar activePage={activePage} onSelectPage={setActivePage} />
 
       <main className="flex-grow w-full px-4 sm:px-6 py-12">
-        {activePage === 'tiktok' || activePage === 'sora' ? (
+        
+        {/* Render Library Page */}
+        {activePage === 'library' ? (
+             <div className="max-w-5xl mx-auto flex flex-col items-center">
+                 {/* Input Area is still visible here so users can quickly download new stuff which auto-switches tabs */}
+                 <div className="w-full max-w-3xl flex flex-col items-center animate-fade-in mb-10">
+                    <div className="w-full bg-white rounded-2xl shadow-sm border border-gray-200 p-2 pl-4 flex flex-col gap-2 transition-shadow focus-within:shadow-md relative opacity-90 hover:opacity-100">
+                        <div className="flex items-start gap-3 pt-2">
+                            <Link className="text-gray-400 flex-shrink-0 mt-1" size={20} />
+                            <textarea
+                                value={inputContent}
+                                onChange={(e) => setInputContent(e.target.value)}
+                                placeholder={ui.placeholder}
+                                className="flex-grow bg-transparent border-none outline-none text-gray-700 placeholder-gray-400 min-h-[40px] max-h-[100px] resize-y py-1 text-sm"
+                                spellCheck={false}
+                            />
+                             {inputContent && (
+                                <button onClick={handleClear} className="text-gray-400 hover:text-gray-600 p-2">
+                                <X size={18} />
+                                </button>
+                            )}
+                        </div>
+                        <div className="flex justify-end border-t border-gray-100 pt-1 px-2 pb-1">
+                            <button 
+                                onClick={handleProcess} 
+                                className="text-xs font-bold text-white bg-blue-600 px-3 py-1 rounded-full hover:bg-blue-700"
+                            >
+                                Tải Ngay
+                            </button>
+                        </div>
+                    </div>
+                 </div>
+
+                 <Library 
+                    history={history} 
+                    onRemove={removeFromHistory} 
+                    onClearAll={clearHistory}
+                 />
+             </div>
+        ) : (
+          activePage === 'tiktok' || activePage === 'sora' ? (
           <div className="max-w-5xl mx-auto flex flex-col items-center">
             
             <h1 className="text-3xl md:text-5xl font-extrabold text-gray-900 text-center mb-4 tracking-tight">
@@ -287,6 +376,7 @@ const App: React.FC = () => {
                 Vui lòng quay lại sau.
             </p>
           </div>
+        )
         )}
       </main>
 
