@@ -28,22 +28,28 @@ export const downloadFile = async (url: string, filename: string) => {
         return true;
     }
   } catch (error) {
-    console.warn('Direct download failed, attempting proxy...', error);
+    console.warn('Direct download failed, attempting proxies...', error);
   }
 
-  // Attempt 2: Use a CORS Proxy to bypass browser restrictions
-  // This is often necessary for TikTok/CDN links that don't allow direct client-side downloads
-  try {
-      const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
-      const response = await fetch(proxyUrl);
-      
-      if (response.ok) {
-          const blob = await response.blob();
-          downloadBlob(blob, filename);
-          return true;
+  // Attempt 2: Use Multiple CORS Proxies to bypass browser restrictions
+  const proxies = [
+      (u: string) => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+      (u: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`
+  ];
+
+  for (const createProxy of proxies) {
+      try {
+          const proxyUrl = createProxy(url);
+          const response = await fetch(proxyUrl);
+          
+          if (response.ok) {
+              const blob = await response.blob();
+              downloadBlob(blob, filename);
+              return true;
+          }
+      } catch (proxyError) {
+          console.warn('Proxy download failed', proxyError);
       }
-  } catch (proxyError) {
-      console.error('Proxy download failed', proxyError);
   }
 
   // Fallback: If all attempts fail, open in new tab

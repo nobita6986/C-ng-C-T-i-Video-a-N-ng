@@ -11,10 +11,10 @@ const Navbar: React.FC<NavbarProps> = ({ activePage, onSelectPage }) => {
 
   const navLinks = [
     { id: 'tiktok', name: 'Video Tiktok' },
+    { id: 'sora', name: 'Video Sora AI' },
     { id: 'douyin', name: 'Video Douyin' },
     { id: 'facebook', name: 'Video Facebook' },
     { id: 'instagram', name: 'Video Instagram' },
-    { id: 'threads', name: 'Video Threads' },
   ];
 
   return (

@@ -13,6 +13,26 @@ const BatchResultList: React.FC<BatchResultListProps> = ({ results, isProcessing
   const [downloading, setDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
 
+  const generateFilename = (title: string, index?: number) => {
+    const now = new Date();
+    const timestamp = 
+        now.getFullYear().toString() +
+        (now.getMonth() + 1).toString().padStart(2, '0') +
+        now.getDate().toString().padStart(2, '0') + '_' +
+        now.getHours().toString().padStart(2, '0') +
+        now.getMinutes().toString().padStart(2, '0') +
+        now.getSeconds().toString().padStart(2, '0');
+
+    // Safe title regex
+    const safeTitle = title
+        .replace(/[^a-zA-Z0-9 \-_àáãạảăắằẳẵặâấầẩẫậèéẹẻẽêềếểễệđìíĩỉịòóõọỏôốồổỗộơớờởỡợùúũụủưứừửữựỳỵỷỹýÀÁÃẠẢĂẮẰẲẴẶÂẤẦẨẪẬÈÉẸẺẼÊỀẾỂỄỆĐÌÍĨỈỊÒÓÕỌỎÔỐỒỔỖỘƠỚỜỞỠỢÙÚŨỤỦƯỨỪỬỮỰỲỴỶỸÝ]/g, '')
+        .trim()
+        .substring(0, 50);
+
+    const suffix = index !== undefined ? `_${index + 1}` : '';
+    return `${safeTitle || 'video'}_${timestamp}${suffix}.mp4`;
+  };
+
   const handleDownloadAll = async () => {
     setDownloading(true);
     setDownloadProgress(0);
@@ -20,7 +40,7 @@ const BatchResultList: React.FC<BatchResultListProps> = ({ results, isProcessing
     // We must trigger downloads sequentially
     for (let i = 0; i < results.length; i++) {
       const video = results[i];
-      const filename = `studyai86_${video.id}.mp4`;
+      const filename = generateFilename(video.title, i);
       
       await downloadFile(video.downloads.noWatermark, filename);
       
@@ -40,7 +60,7 @@ const BatchResultList: React.FC<BatchResultListProps> = ({ results, isProcessing
 
   const handleSingleDownload = async (e: React.MouseEvent, video: VideoData) => {
     e.preventDefault();
-    const filename = `studyai86_${video.id}.mp4`;
+    const filename = generateFilename(video.title);
     await downloadFile(video.downloads.noWatermark, filename);
   };
 
